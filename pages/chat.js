@@ -1,22 +1,45 @@
 import { Box, Text, TextField, Image, Button } from '@skynexui/components';
+import { createClient } from '@supabase/supabase-js';
 import React from 'react';
 import appConfig from '../config.json';
+
+
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzM3OTg2OCwiZXhwIjoxOTU4OTU1ODY4fQ.6p3Jo_7aty3TRKBvjNLF2mp-7dC9X0fcmMYjgzVCl9Q"
+const SUPABASE_URL = "https://otjenvpzztbqmaaosjkv.supabase.co"
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 export default function ChatPage() {
     const [message, setMessage] = React.useState('');
     const [listMessage, setListMessage] = React.useState([]);
 
+    React.useEffect(() => {
+        const supabasedata = supabase
+            .from('messages')
+            .select('*')
+            .order('id', { ascending: false })
+            .then(({ data }) => {
+                console.log(data)
+                setListMessage(data);
+            });
+    }, []);
+
 
     function handleNewMessage(newMessage) {
         const message = {
-            id: listMessage.length + 1,
             from: 'vmpires',
             text: newMessage,
-        }
-        setListMessage([
-            message,
-            ...listMessage,
-        ]);
+        };
+
+        supabase
+            .from('messages')
+            .insert([message])
+            .then(({ data }) => {
+                setListMessage([
+                    data[0],
+                    ...listMessage,
+                ]);
+            });
+
         setMessage('');
     }
 
@@ -158,7 +181,7 @@ function MessageList(props) {
                                     display: 'inline-block',
                                     marginRight: '8px',
                                 }}
-                                src={`https://github.com/vmpires.png`}
+                                src={`https://github.com/${currentMessage.from}.png`}
                             />
                             <Text tag="strong">
                                 {currentMessage.from}
@@ -180,4 +203,4 @@ function MessageList(props) {
             })}
         </Box>
     )
-}
+};
