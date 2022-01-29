@@ -1,6 +1,7 @@
 import appConfig from '../config.json'
 import React from 'react';
 import { useRouter } from 'next/router';
+import { Helmet } from 'react-helmet'
 import { Box, Button, Text, TextField, Image } from '@skynexui/components';
 
 function Title(props){
@@ -22,10 +23,13 @@ function Title(props){
 
 export default function PaginaInicial() {
     const [username, setUsername] = React.useState();
-    const roteamento = useRouter();
+    const routing = useRouter();
   
     return (
       <>
+        <Helmet>
+          <title>Matrix Chat</title>
+        </Helmet>
         <Box
           styleSheet={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -54,16 +58,16 @@ export default function PaginaInicial() {
               as="form"
               onSubmit={ function (event) {
                   event.preventDefault();
-                  roteamento.push('/chat');
+                  routing.push(`/chat?username=${username}`);
               }
               }
               styleSheet={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                width: { xs: '100%', sm: '50%' }, textAlign: 'center', marginBottom: '32px',
+                width: { xs: '100%', sm: '50%' }, textAlign: 'center', marginBottom: '3px',
               }}
             >
               <Title tag="h2">Seja bem-vindo!</Title>
-              <Text variant="body3" styleSheet={{ marginBottom: '32px', color: appConfig.theme.colors.neutrals[300] }}>
+              <Text variant="body3" styleSheet={{ marginBottom: '20px', color: appConfig.theme.colors.neutrals[300] }}>
                 {appConfig.name}
               </Text>
   

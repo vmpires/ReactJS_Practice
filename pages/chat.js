@@ -1,5 +1,8 @@
 import { Box, Text, TextField, Image, Button } from '@skynexui/components';
 import { createClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/router';
+import { ButtonSendSticker } from '../src/components/sendsticker'
+import { Helmet } from 'react-helmet'
 import React from 'react';
 import appConfig from '../config.json';
 
@@ -8,7 +11,18 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5v
 const SUPABASE_URL = "https://otjenvpzztbqmaaosjkv.supabase.co"
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+function realTimeMessages (addMessage) {
+    return supabase
+    .from('messages')
+    .on('INSERT', (liveresponse)=> {
+        addMessage(liveresponse.new)
+    })
+    .subscribe();
+}
+
 export default function ChatPage() {
+    const routing = useRouter();
+    const loggedUser = routing.query.username;
     const [message, setMessage] = React.useState('');
     const [listMessage, setListMessage] = React.useState([]);
 
@@ -21,12 +35,21 @@ export default function ChatPage() {
                 console.log(data)
                 setListMessage(data);
             });
+            
+            realTimeMessages((newMessage) =>{
+                setListMessage((currentListValue) =>{
+                    return [
+                        newMessage,
+                        ...currentListValue,
+                    ] 
+                })
+            });
     }, []);
 
 
     function handleNewMessage(newMessage) {
         const message = {
-            from: 'vmpires',
+            from: loggedUser,
             text: newMessage,
         };
 
@@ -34,16 +57,17 @@ export default function ChatPage() {
             .from('messages')
             .insert([message])
             .then(({ data }) => {
-                setListMessage([
-                    data[0],
-                    ...listMessage,
-                ]);
+
             });
 
         setMessage('');
     }
 
     return (
+        <>
+        <Helmet>
+            <title>Matrix chat page</title>
+        </Helmet>
         <Box
             styleSheet={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -116,10 +140,16 @@ export default function ChatPage() {
                                 color: appConfig.theme.colors.neutrals[200],
                             }}
                         />
+                        <ButtonSendSticker
+                            onStickerClick={(sticker) =>{
+                                handleNewMessage(':sticker:'+sticker);
+                            }}                   
+                        />
                     </Box>
                 </Box>
             </Box>
         </Box>
+        </>
     )
 }
 
@@ -197,7 +227,14 @@ function MessageList(props) {
                                 {(new Date().toLocaleDateString())}
                             </Text>
                         </Box>
-                        {currentMessage.text}
+                        {currentMessage.text.startsWith(':sticker:')
+                        ? (
+                            <Image src={currentMessage.text.replace(':sticker:', '')}/>
+                        )
+                        : (
+                            currentMessage.text
+                        )}
+                        
                     </Text>
                 )
             })}
